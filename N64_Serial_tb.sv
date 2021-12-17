@@ -36,7 +36,7 @@ endtask
         rst_n = 1;
 
         @(posedge clk);
-        cmd_data = 8'h00;
+        cmd_data = 8'hAA;
         cmd_rdy = 1;
 
         @(posedge clk);

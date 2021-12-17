@@ -31,8 +31,8 @@ always_ff @(posedge clk)
     else
         tx_cycle_count <= 0; 
 
-wire tx_cycle_count_data = tx_cycle_count == 7'd50;
-wire tx_cycle_count_start_end = tx_cycle_count == 7'd25;
+wire tx_cycle_count_data = tx_cycle_count == 7'd48;
+wire tx_cycle_count_start_end = tx_cycle_count == 7'd24;
 wire tx_cycle_count_stop = tx_cycle_count == 7'd60;
 
 ///////////////////////
