@@ -1,5 +1,8 @@
 `timescale 1ns/1ns
 module JOYBUS_tx_tb ();
+
+import tb_tasks::*;
+
     reg clk, rst_n;
 
     reg [7:0] cmd_data;
@@ -9,19 +12,6 @@ module JOYBUS_tx_tb ();
     wire JB_TX;
     wire JB_TX_SEL;
     reg tx_done;
-
-task automatic wait4sig(ref sig, input int clk2wait);
-    fork
-        begin: timeout
-            repeat(clk2wait) @(posedge clk);
-            $display("Error timeout for waiting for sig");
-        end
-        begin 
-            @(posedge sig);
-            disable timeout;
-        end
-    join
-endtask
 
     JOYBUS_tx iDUT (.*);
 
@@ -45,7 +35,7 @@ endtask
         cmd_rdy = 0;
 
         // not self checking unfortunately
-        wait4sig(tx_done, 2000000);
+        wait4sig(clk, tx_done, 2000000);
 
         $display("YAHOO! Test passed..");
         $finish();

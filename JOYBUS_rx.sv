@@ -5,13 +5,15 @@ module JOYBUS_rx (
     input rx_start,
     output reg rx_done,
     output [7:0] jb_cntlr_status,
-    output [15:0] jb_cntlr_data
+    output [31:0] jb_cntlr_data
 );
+
 ////////////////////////////
 // STATE MACHINE OUTPUTS //
 //////////////////////////
 logic count_cycles;
 logic shift_rx;
+logic set_done;
 
 ///////////////////////////////////////
 // RX line metastability prevention //
@@ -58,21 +60,21 @@ wire rx_cycle_bit_high = rx_cycle_high_count > rx_cycle_low_count;
 // Shift Reg for RX //
 /////////////////////
 
-logic [23:0] jb_rx_shift_reg;
+logic [39:0] jb_rx_shift_reg;
 always_ff @(posedge clk,negedge rst_n)
     if (!rst_n)
         jb_rx_shift_reg <= 0; // set
     else if (shift_rx)        
-        jb_rx_shift_reg <= {jb_rx_shift_reg[22:0],rx_cycle_bit_high};
+        jb_rx_shift_reg <= {jb_rx_shift_reg[38:0],rx_cycle_bit_high};
 
-assign jb_cntlr_status = jb_rx_shift_reg[23:16];
-assign jb_cntlr_data = jb_rx_shift_reg[15:0];
+assign jb_cntlr_status = jb_rx_shift_reg[39:32];
+assign jb_cntlr_data = jb_rx_shift_reg[31:0];
 
 /////////////////////////
 // Bit counter for RX //
 ///////////////////////
 
-logic [4:0] bit_cnt;
+logic [5:0] bit_cnt;
 always_ff @(posedge clk, negedge rst_n) 
     if (!rst_n)
         bit_cnt = 0;
@@ -80,6 +82,15 @@ always_ff @(posedge clk, negedge rst_n)
         bit_cnt = 0;
     else if (shift_rx)
         bit_cnt <= bit_cnt + 1;
+
+///////////////////
+// rx_done flop //
+/////////////////
+always @(posedge clk)
+    if (set_done)       
+        rx_done <= 1;
+    else
+        rx_done <= 0;
 
 //////////////////////////
 // STATE MACHINE LOGIC //
@@ -99,7 +110,7 @@ always_ff @(posedge clk, negedge rst_n)
 always_comb begin
     count_cycles = 0; 
     shift_rx = 0;
-    rx_done = 0;
+    set_done = 0;
 
     nxt_state = state;
 
@@ -118,7 +129,7 @@ always_comb begin
             count_cycles = 1;
     end
     SHFT: begin
-        if (bit_cnt == 24)
+        if (bit_cnt == 6'h28)
             nxt_state = STOP;
         else
             nxt_state = READ;
@@ -126,11 +137,10 @@ always_comb begin
     STOP: begin
         if (rx_cycle_count_stop) begin
             nxt_state = IDLE;
-            rx_done = 1;
+            set_done = 1;
         end else
             count_cycles = 1;
     end
     endcase
 end
-
 endmodule

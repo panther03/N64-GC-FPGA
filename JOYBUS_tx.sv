@@ -18,6 +18,7 @@ logic tx_low;
 logic init_tran;
 logic set_done;
 logic shift_tx;
+logic sel_low;
 
 /////////////////////////////////////
 // Counter for each duration type //
@@ -83,12 +84,22 @@ end
 ////////////////////
 
 always @(posedge clk, negedge rst_n)
-    if (!rst_n)
-        tx_done <= 0;
-    else if (set_done)       
+    if (set_done)       
         tx_done <= 1;
-    else if (init_tran|rx_done)
+    else
         tx_done <= 0;
+//    else if (init_tran|rx_done)
+//        tx_done <= 0;
+
+/////////////////////
+// JB_TX_SEL flop //
+///////////////////
+
+always @(posedge clk)
+    if (sel_low)
+        JB_TX_SEL <= 0;
+    else    
+        JB_TX_SEL <= 1;
 
 //////////////////////////
 // STATE MACHINE LOGIC //
@@ -112,8 +123,7 @@ always_comb begin
     set_done = 0;
     init_tran = 0;
     shift_tx = 0;
-
-    JB_TX_SEL = 1;
+    sel_low = 0;
 
     nxt_state = state;
 
@@ -163,6 +173,7 @@ always_comb begin
         if (tx_cycle_count_stop) begin
             nxt_state = RCV_WAIT;
             set_done = 1;
+            sel_low = 1;
         end else begin
             count_cycles = 1;
             tx_high = 1;
@@ -172,7 +183,7 @@ always_comb begin
         if (rx_done)
             nxt_state = IDLE;
         else
-            JB_TX_SEL = 0;
+            sel_low = 1;
     end
     endcase
 end
