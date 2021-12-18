@@ -25,16 +25,14 @@ JOYBUS_tx iJB_TX(.*);
 // RX INSTANTIATION //
 /////////////////////
 logic JB_RX;
-JOYBUS_tx iJB_RX(.*, .rx_start(tx_done));
+JOYBUS_rx iJB_RX(.*, .rx_start(tx_done));
 
 //////////////////////////
 // TRISTATE ASSIGNMENT //
 ////////////////////////
 
 assign JB_RX = JB;
-assign JB = JB_TX_SEL ? JB_TX : 1'bz; // pull line to high-Z if we're reading i.e. JB_TX_SEL is low
-
-
-
+// pull line to high-Z if we're reading i.e. JB_TX_SEL is low
+assign JB = JB_TX_SEL ? JB_TX : 1'bz; 
 
 endmodule

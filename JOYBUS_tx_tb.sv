@@ -1,13 +1,13 @@
 `timescale 1ns/1ns
-module N64_Serial_tb ();
+module JOYBUS_tx_tb ();
     reg clk, rst_n;
 
     reg [7:0] cmd_data;
     reg cmd_rdy;
-
-    reg JB_RX; // unused?
+    reg rx_done;
 
     wire JB_TX;
+    wire JB_TX_SEL;
     reg tx_done;
 
 task automatic wait4sig(ref sig, input int clk2wait);
@@ -23,11 +23,13 @@ task automatic wait4sig(ref sig, input int clk2wait);
     join
 endtask
 
-    JOYBUS_host iDUT (.*);
+    JOYBUS_tx iDUT (.*);
 
     initial begin
         rst_n = 1;
         clk = 0;
+        rx_done = 0;
+        cmd_rdy = 0;
 
         @(posedge clk);
         rst_n = 0;
@@ -42,6 +44,7 @@ endtask
         @(posedge clk);
         cmd_rdy = 0;
 
+        // not self checking unfortunately
         wait4sig(tx_done, 2000000);
 
         $display("YAHOO! Test passed..");

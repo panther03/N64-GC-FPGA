@@ -6,7 +6,7 @@ module JOYBUS_tx (
     input rx_done,
     output reg JB_TX,
     output reg JB_TX_SEL,
-    output reg tx_done, // TEMPORARY
+    output reg tx_done
 );
 
 ////////////////////////////
@@ -15,7 +15,8 @@ module JOYBUS_tx (
 logic count_cycles; 
 logic tx_high;
 logic tx_low;
-logic ld_cmd_data;
+logic init_tran;
+logic set_done;
 logic shift_tx;
 
 /////////////////////////////////////
@@ -46,24 +47,23 @@ logic [7:0] jb_tx_shift_reg;
 always_ff @(posedge clk,negedge rst_n)
     if (!rst_n)
         jb_tx_shift_reg <= 8'hff; // set
-    else
-        case ({ld_cmd_data, shift_tx})
-            2'b00 : jb_tx_shift_reg <= jb_tx_shift_reg;
-            2'b01 : jb_tx_shift_reg <= {jb_tx_shift_reg[6:0],1'b1};
-            default : jb_tx_shift_reg <= cmd_data; // 10 or 11
-        endcase
+    else if (init_tran)
+        jb_tx_shift_reg <= cmd_data;
+    else if (shift_tx)        
+        jb_tx_shift_reg <= {jb_tx_shift_reg[6:0],1'b1};
 
 /////////////////////////
 // Bit counter for TX //
 ///////////////////////
 
 logic [3:0] bit_cnt;
-always_ff @(posedge clk) 
-    case ({ld_cmd_data, shift_tx})
-        2'b00 : bit_cnt <= bit_cnt;
-        2'b01 : bit_cnt <= bit_cnt + 1;
-        default : bit_cnt <= 4'h0; // 10 or 11
-    endcase
+always_ff @(posedge clk, negedge rst_n) 
+    if (!rst_n)
+        bit_cnt = 0;
+    else if (init_tran)
+        bit_cnt = 0;
+    else if  (shift_tx)
+        bit_cnt <= bit_cnt + 1;
 
 /////////////////////////////
 // TX combinational logic //
@@ -78,7 +78,21 @@ always_comb begin
         JB_TX = jb_tx_shift_reg[7];
 end
 
-// STATE MACHINE LOGIC
+//////////////////////
+// tx_done SR flop //
+////////////////////
+
+always @(posedge clk, negedge rst_n)
+    if (!rst_n)
+        tx_done <= 0;
+    else if (set_done)       
+        tx_done <= 1;
+    else if (init_tran|rx_done)
+        tx_done <= 0;
+
+//////////////////////////
+// STATE MACHINE LOGIC //
+////////////////////////
 
 typedef enum reg [2:0] {IDLE, CMD, DATA, DATA_CNT, HIGH, STOP, RCV_WAIT} TX_state_t;
 TX_state_t state, nxt_state;
@@ -95,8 +109,8 @@ always_comb begin
     count_cycles = 0; 
     tx_high = 0;
     tx_low = 0;
-    tx_done = 0;
-    ld_cmd_data = 0;
+    set_done = 0;
+    init_tran = 0;
     shift_tx = 0;
 
     JB_TX_SEL = 1;
@@ -109,7 +123,7 @@ always_comb begin
             nxt_state = CMD;
             count_cycles = 1;
             tx_low = 1;
-            ld_cmd_data = 1;
+            init_tran = 1;
     end
     CMD: begin
         if (tx_cycle_count_start_end) begin
@@ -148,7 +162,7 @@ always_comb begin
     STOP: begin
         if (tx_cycle_count_stop) begin
             nxt_state = RCV_WAIT;
-            tx_done = 1;
+            set_done = 1;
         end else begin
             count_cycles = 1;
             tx_high = 1;

@@ -1,4 +1,4 @@
-``timescale 1ns/1ns
+`timescale 1ns/1ns
 module UART_tx (
     input clk, rst_n,
     input trmt,
