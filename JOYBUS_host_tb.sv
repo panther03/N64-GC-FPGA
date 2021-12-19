@@ -64,13 +64,13 @@ endtask
                 $display("TRANSFERRING CONTROL.. time=%t", $time());
                 cntlr_test_write = 1;
                 send_rand_resp(JB_RX, resp);
-                cntlr_test_write = 0;
                 repeat(1000) @(posedge clk);
                 $display("Error timeout for waiting for rx_done");
                 $stop();
             end
             begin: wait_data
                 @(posedge iDUT.rx_done);
+                cntlr_test_write = 0;
                 disable send_data;
             end
         join
