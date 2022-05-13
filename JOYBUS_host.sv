@@ -4,7 +4,8 @@ module JOYBUS_host (
     output JB,
     output btn_A,
     output btn_B,
-    output btn_Z
+    output btn_Z,
+    output reg [3:0] dbg
 );
 
 localparam POLL_RATE_MS = 20;
@@ -96,11 +97,13 @@ always_comb begin
     cmd_data = 0;
     ld_cntlr_data = 0;
     rst_cntlr_data = 0;
+    dbg = 4'b0000;
 
     nxt_state = state;
 
     case (state)
     IDLE: begin
+        dbg = 4'b0000;
         if (poll_cycle_count_done) begin
             nxt_state = TRX;
             cmd_data = 8'h01;
@@ -112,10 +115,13 @@ always_comb begin
     TRX: begin
         if (rx_done) begin
             nxt_state = IDLE;
+            dbg = 4'b11111;
             if (jb_rx_cntlr_status == 8'h05)
                 ld_cntlr_data = 1;
             else
                 rst_cntlr_data = 1;
+        end else begin
+            dbg = 4'b0011;
         end
     end
     endcase

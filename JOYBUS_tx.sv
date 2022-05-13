@@ -83,7 +83,7 @@ end
 // tx_done SR flop //
 ////////////////////
 
-always @(posedge clk, negedge rst_n)
+always @(posedge clk)
     if (set_done)       
         tx_done <= 1;
     else

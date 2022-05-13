@@ -39,7 +39,7 @@ always_ff @(posedge clk,negedge rst_n)
 // See: https://www.raphnet.net/electronique/gc_n64_usb/index_en.php#5
 logic [6:0] rx_cycle_low_count;
 logic [6:0] rx_cycle_high_count;
-always_ff @(posedge clk, negedge rst_n) 
+always_ff @(posedge clk) 
     if (count_cycles)
         if (JB_RX_ff2)
             rx_cycle_high_count <= rx_cycle_high_count + 1;

@@ -3,3 +3,6 @@ vsim.wlf
 work/*
 *.cr.mti
 *.mpf
+db/
+incremental_db
+output_files/
