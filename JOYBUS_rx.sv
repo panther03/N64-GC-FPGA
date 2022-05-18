@@ -4,8 +4,8 @@ module JOYBUS_rx (
     input JB_RX,
     input rx_start,
     output reg rx_done,
-    output [7:0] jb_cntlr_status,
-    output [31:0] jb_cntlr_data
+    output [31:0] jb_cntlr_data,
+    output count_high_dbg
 );
 
 ////////////////////////////
@@ -37,8 +37,8 @@ always_ff @(posedge clk,negedge rst_n)
 // Once they sum to 100 cycles (4uS), compare each to see which one was higher.
 // This "voting" method helps counteract controllers with delayed timing e.g Hori Pad Mini.
 // See: https://www.raphnet.net/electronique/gc_n64_usb/index_en.php#5
-logic [6:0] rx_cycle_low_count;
-logic [6:0] rx_cycle_high_count;
+logic [7:0] rx_cycle_low_count;
+logic [7:0] rx_cycle_high_count;
 always_ff @(posedge clk) 
     if (count_cycles)
         if (JB_RX_ff2)
@@ -52,23 +52,22 @@ always_ff @(posedge clk)
 
 logic [7:0] rx_cycle_total_count;
 assign rx_cycle_total_count = rx_cycle_high_count + rx_cycle_low_count;
-wire rx_cycle_count_done = rx_cycle_total_count == 8'd100;
-wire rx_cycle_count_stop = rx_cycle_total_count == 8'd50;
+wire rx_cycle_count_done = rx_cycle_total_count == 8'd200;
+wire rx_cycle_count_stop = rx_cycle_total_count == 8'd100;
 wire rx_cycle_bit_high = rx_cycle_high_count > rx_cycle_low_count;
 
 ///////////////////////
 // Shift Reg for RX //
 /////////////////////
 
-logic [39:0] jb_rx_shift_reg;
+logic [31:0] jb_rx_shift_reg;
 always_ff @(posedge clk,negedge rst_n)
     if (!rst_n)
         jb_rx_shift_reg <= 0; // set
     else if (shift_rx)        
-        jb_rx_shift_reg <= {jb_rx_shift_reg[38:0],rx_cycle_bit_high};
+        jb_rx_shift_reg <= {jb_rx_shift_reg[30:0],rx_cycle_bit_high};
 
-assign jb_cntlr_status = jb_rx_shift_reg[39:32];
-assign jb_cntlr_data = jb_rx_shift_reg[31:0];
+assign jb_cntlr_data = jb_rx_shift_reg;
 
 /////////////////////////
 // Bit counter for RX //
@@ -106,6 +105,9 @@ always_ff @(posedge clk, negedge rst_n)
     else
         state <= nxt_state;
 
+// DEBUG: for seeing when we're reading JB
+assign count_high_dbg = count_cycles;
+
 // combinational logic (next state and output ctrl)
 always_comb begin
     count_cycles = 0; 
@@ -129,7 +131,7 @@ always_comb begin
             count_cycles = 1;
     end
     SHFT: begin
-        if (bit_cnt == 6'h28)
+        if (bit_cnt == 6'h20)
             nxt_state = STOP;
         else
             nxt_state = READ;

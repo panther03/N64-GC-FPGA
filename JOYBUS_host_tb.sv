@@ -6,6 +6,7 @@ import tb_tasks::*;
     reg clk, rst_n;
 
     wire JB;
+    wire [3:0] dbg;
 
     wire btn_A, btn_B, btn_Z;
 

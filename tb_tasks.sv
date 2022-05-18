@@ -17,25 +17,25 @@ package tb_tasks;
     task automatic bit0(ref RX);
         begin
             RX = 0;
-            #3000; 
+            #6000; 
             RX = 1;
-            #1000;
+            #2000;
         end
     endtask
 
     task automatic bit1(ref RX);
         begin
             RX = 0;
-            #1000; 
+            #2000; 
             RX = 1;
-            #3000;
+            #6000;
         end
     endtask
 
     task automatic bit_stop (ref RX);
         begin
             RX = 0;
-            #2000;
+            #4000;
             RX = 1;
         end
     endtask

@@ -1,11 +1,14 @@
 `timescale 1ns/1ns
 module JOYBUS_host (
     input clk, rst_n,
-    output JB,
+    inout JB,
     output btn_A,
     output btn_B,
     output btn_Z,
-    output reg [3:0] dbg
+    output btn_S,
+    output [3:0] dig,
+    output [7:0] seg,
+    output count_high_dbg
 );
 
 localparam POLL_RATE_MS = 20;
@@ -18,7 +21,7 @@ logic count_poll_cycles;
 logic cmd_rdy;
 logic [7:0] cmd_data;
 logic ld_cntlr_data;
-logic rst_cntlr_data;
+//logic rst_cntlr_data;
 
 //////////////////////
 // POLLING COUNTER //
@@ -40,34 +43,42 @@ logic tx_done;
 logic rx_done;
 JOYBUS_tx iJB_TX(.*);
 
+// 7 seg debug shit
+/*
+reg [15:0] seven_seg_dbg;
+wire [16:0] seven_seg_dbg_out;
+always_ff @(posedge clk, negedge rst_n) begin
+    if (!rst_n)
+        seven_seg_dbg <= 0;
+    else if (seven_seg_dbg_out[16])
+        seven_seg_dbg <= seven_seg_dbg_out[15:0];
+end*/
+
 ///////////////////////
 // RX INSTANTIATION //
 /////////////////////
 logic JB_RX;
-logic [7:0] jb_rx_cntlr_status;
 logic [31:0] jb_rx_cntlr_data;
 JOYBUS_rx iJB_RX(.*, .rx_start(tx_done),
-    .jb_cntlr_status(jb_rx_cntlr_status),
     .jb_cntlr_data(jb_rx_cntlr_data));
 
 //////////////////////////
 // TRISTATE ASSIGNMENT //
 ////////////////////////
-assign JB_RX = JB;
+assign JB_RX = JB_TX_SEL ? 1'b0 : JB;
 // pull line to high-Z if we're reading i.e. JB_TX_SEL is low
-assign JB = JB_TX_SEL ? JB_TX : 1'bz; 
+assign JB = JB_TX_SEL ? JB_TX : 1'bz;
 
 ///////////////////////////////////
 // FLOP TO HOLD CONTROLLER DATA //
 /////////////////////////////////
 logic [31:0] jb_cntlr_data;
 always_ff @(posedge clk, negedge rst_n)
-    if (!rst_n)
+    if (!rst_n) begin 
         jb_cntlr_data <= 0;
-    else if (rst_cntlr_data)
-        jb_cntlr_data <= 0;
-    else if (ld_cntlr_data)
+    end else if (ld_cntlr_data) begin
         jb_cntlr_data <= jb_rx_cntlr_data; 
+	 end
 
 /////////////////////////
 // BUTTON ASSIGNMENTS //
@@ -75,6 +86,7 @@ always_ff @(posedge clk, negedge rst_n)
 assign btn_A = jb_cntlr_data[31];
 assign btn_B = jb_cntlr_data[30];
 assign btn_Z = jb_cntlr_data[29];
+assign btn_S = jb_cntlr_data[28];
 
 //////////////////////////
 // STATE MACHINE LOGIC //
@@ -96,14 +108,11 @@ always_comb begin
     cmd_rdy = 0;
     cmd_data = 0;
     ld_cntlr_data = 0;
-    rst_cntlr_data = 0;
-    dbg = 4'b0000;
 
     nxt_state = state;
 
     case (state)
     IDLE: begin
-        dbg = 4'b0000;
         if (poll_cycle_count_done) begin
             nxt_state = TRX;
             cmd_data = 8'h01;
@@ -115,15 +124,17 @@ always_comb begin
     TRX: begin
         if (rx_done) begin
             nxt_state = IDLE;
-            dbg = 4'b11111;
-            if (jb_rx_cntlr_status == 8'h05)
-                ld_cntlr_data = 1;
-            else
-                rst_cntlr_data = 1;
-        end else begin
-            dbg = 4'b0011;
+           // if (jb_rx_cntlr_status == 8'h05)
+            ld_cntlr_data = 1;
+           // else
+            //    rst_cntlr_data = 1;
         end
     end
     endcase
 end
+
+
+// 7seg for debug
+seven_seg_main i7Seg(.disp_num(jb_cntlr_data[15:0]),.clk(clk),.rst_n(rst_n),.dig(dig),.seg(seg));
+
 endmodule

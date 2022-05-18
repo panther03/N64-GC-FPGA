@@ -24,19 +24,21 @@ logic sel_low;
 // Counter for each duration type //
 ///////////////////////////////////
 
+localparam DATA_DELAY = 100;
+
 // STOP bit = 2.4uS
 // Data = 2uS
 // Bit start/ends = 1uS
-logic [6:0] tx_cycle_count;
+logic [$clog2(DATA_DELAY):0] tx_cycle_count;
 always_ff @(posedge clk) 
     if (count_cycles) 
         tx_cycle_count <= tx_cycle_count + 1;
     else
         tx_cycle_count <= 0; 
 
-wire tx_cycle_count_data = tx_cycle_count == 7'd48;
-wire tx_cycle_count_start_end = tx_cycle_count == 7'd24;
-wire tx_cycle_count_stop = tx_cycle_count == 7'd60;
+wire tx_cycle_count_data = tx_cycle_count == DATA_DELAY - 2; //48
+wire tx_cycle_count_start_end = tx_cycle_count == (DATA_DELAY >> 1) - 1; //24
+wire tx_cycle_count_stop = tx_cycle_count == DATA_DELAY - 1; //60
 
 ///////////////////////
 // Shift Reg for TX //
@@ -134,6 +136,7 @@ always_comb begin
             count_cycles = 1;
             tx_low = 1;
             init_tran = 1;
+            sel_low = 1;
     end
     CMD: begin
         if (tx_cycle_count_start_end) begin
