@@ -5,7 +5,7 @@ module JOYBUS_rx (
     input rx_start,
     output reg rx_done,
     output [31:0] jb_cntlr_data,
-    output count_high_dbg
+    output DBG_count_high
 );
 
 ////////////////////////////

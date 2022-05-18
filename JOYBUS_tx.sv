@@ -36,9 +36,9 @@ always_ff @(posedge clk)
     else
         tx_cycle_count <= 0; 
 
-wire tx_cycle_count_data = tx_cycle_count == DATA_DELAY - 2; //48
-wire tx_cycle_count_start_end = tx_cycle_count == (DATA_DELAY >> 1) - 1; //24
-wire tx_cycle_count_stop = tx_cycle_count == DATA_DELAY - 1; //60
+wire tx_cycle_count_data = tx_cycle_count == DATA_DELAY - 2; 
+wire tx_cycle_count_start_end = tx_cycle_count == (DATA_DELAY >> 1) - 1;
+wire tx_cycle_count_stop = tx_cycle_count == DATA_DELAY - 1;
 
 ///////////////////////
 // Shift Reg for TX //
@@ -90,8 +90,6 @@ always @(posedge clk)
         tx_done <= 1;
     else
         tx_done <= 0;
-//    else if (init_tran|rx_done)
-//        tx_done <= 0;
 
 /////////////////////
 // JB_TX_SEL flop //

@@ -6,9 +6,9 @@ module JOYBUS_host (
     output btn_B,
     output btn_Z,
     output btn_S,
-    output [3:0] dig,
-    output [7:0] seg,
-    output count_high_dbg
+    output [3:0] DBG_dig,
+    output [7:0] DBG_seg,
+    output DBG_count_high
 );
 
 localparam POLL_RATE_MS = 20;
@@ -43,17 +43,6 @@ logic tx_done;
 logic rx_done;
 JOYBUS_tx iJB_TX(.*);
 
-// 7 seg debug shit
-/*
-reg [15:0] seven_seg_dbg;
-wire [16:0] seven_seg_dbg_out;
-always_ff @(posedge clk, negedge rst_n) begin
-    if (!rst_n)
-        seven_seg_dbg <= 0;
-    else if (seven_seg_dbg_out[16])
-        seven_seg_dbg <= seven_seg_dbg_out[15:0];
-end*/
-
 ///////////////////////
 // RX INSTANTIATION //
 /////////////////////
@@ -77,6 +66,7 @@ always_ff @(posedge clk, negedge rst_n)
     if (!rst_n) begin 
         jb_cntlr_data <= 0;
     end else if (ld_cntlr_data) begin
+        // When we're finished with a read, hold it until the next poll (20ms by default)
         jb_cntlr_data <= jb_rx_cntlr_data; 
 	 end
 
@@ -124,17 +114,14 @@ always_comb begin
     TRX: begin
         if (rx_done) begin
             nxt_state = IDLE;
-           // if (jb_rx_cntlr_status == 8'h05)
             ld_cntlr_data = 1;
-           // else
-            //    rst_cntlr_data = 1;
         end
     end
     endcase
 end
 
 
-// 7seg for debug
-seven_seg_main i7Seg(.disp_num(jb_cntlr_data[15:0]),.clk(clk),.rst_n(rst_n),.dig(dig),.seg(seg));
+// Seven segment display for debug
+seven_seg_main i7Seg(.disp_num(jb_cntlr_data[15:0]),.clk(clk),.rst_n(rst_n),.dig(DBG_dig),.seg(DBG_seg));
 
 endmodule

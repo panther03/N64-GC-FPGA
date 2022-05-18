@@ -8,22 +8,13 @@ import tb_tasks::*;
     wire JB;
     wire [3:0] dbg;
 
-    wire btn_A, btn_B, btn_Z;
+    wire btn_A, btn_B, btn_Z, btn_S;
 
     reg cntlr_test_write;
     reg JB_RX;
 
 task automatic send_rand_resp(ref RX, output [31:0] resp);
     begin
-    // status byte
-    bit0(RX);
-    bit0(RX);
-    bit0(RX);
-    bit0(RX);
-    bit0(RX);
-    bit1(RX);
-    bit0(RX);
-    bit1(RX);
     resp = $urandom();
     $display("Sending %h", resp);
     for (int i = 31; i >= 0; i--)
@@ -36,7 +27,7 @@ task automatic send_rand_resp(ref RX, output [31:0] resp);
     end
 endtask
 
-    JOYBUS_host iDUT (.*);
+    JOYBUS_host iDUT (.*, .DBG_dig(), .DBG_seg(), .DBG_count_high());
 
     integer cnt;
     logic [31:0] resp;
@@ -58,32 +49,34 @@ endtask
         @(posedge clk);            
 
         repeat (3) begin
-        wait4sig(clk, iDUT.tx_done, 2000000);
+            wait4sig(clk, iDUT.tx_done, 2000000);
 
-        fork
-            begin: send_data
-                $display("TRANSFERRING CONTROL.. time=%t", $time());
-                cntlr_test_write = 1;
-                send_rand_resp(JB_RX, resp);
-                repeat(1000) @(posedge clk);
-                $display("Error timeout for waiting for rx_done");
-                $stop();
-            end
-            begin: wait_data
-                @(posedge iDUT.rx_done);
-                cntlr_test_write = 0;
-                disable send_data;
-            end
-        join
+            fork
+                begin: send_data
+                    $display("TRANSFERRING CONTROL.. time=%t", $time());
+                    cntlr_test_write = 1;
+                    send_rand_resp(JB_RX, resp);
+                    repeat(1000) @(posedge clk);
+                    $display("Error timeout for waiting for rx_done");
+                    $stop();
+                end
+                begin: wait_data
+                    @(posedge iDUT.rx_done);
+                    cntlr_test_write = 0;
+                    disable send_data;
+                end
+            join
 
-        repeat (2) @(posedge clk);
-        $display("Controller values received:");
-        $display("A: %b B: %b Z: %b", btn_A, btn_B, btn_Z);
-        assert(btn_A == resp[31]);
-        assert(btn_B == resp[30]);
-        assert(btn_Z == resp[29]);
-        $display("Cycle: %d", cnt);
-        cnt = cnt + 1;
+            repeat (2) @(posedge clk);
+            $display("Controller values received:");
+            $display("A: %b B: %b Z: %b S: %b", btn_A, btn_B, btn_Z, btn_S);
+            assert(btn_A == resp[31]);
+            assert(btn_B == resp[30]);
+            assert(btn_Z == resp[29]);
+            assert(btn_S == resp[28]);
+            $display("Cycle: %d", cnt);
+            cnt = cnt + 1;
+
         end 
 
         $display("YAHOO! Test passed..");
