@@ -9,7 +9,7 @@ module UART_tx (
 
 // set baud rate as localparams
 localparam BAUD_RATE = 19200;
-localparam CLK = 50000000;
+localparam CLK = 50000000; // 50 MHz
 localparam BAUD_CNT_REF = CLK/BAUD_RATE;
 
 logic [3:0] bit_cnt;
@@ -83,23 +83,23 @@ always_comb begin
     set_done = 0;
 
     case (state) 
-        IDLE:
-        // wait till external trmt signal goes high,
-        // then we can start transmitting
-        if (trmt) begin
-            nxt_state = TRAN;
-            init = 1;
-        end
+            IDLE:
+            // wait till external trmt signal goes high,
+            // then we can start transmitting
+            if (trmt) begin
+                nxt_state = TRAN;
+                init = 1;
+            end
         default: begin
-        // stay in TRAN until we have counted to 10 bits,
-        // then transmission is over and we go to IDLE
-        if (bit_cnt == 4'hA) begin
-            nxt_state = IDLE;
-            set_done = 1;
-        end else begin
-            nxt_state = TRAN;
-            transmitting = 1;
-        end
+            // stay in TRAN until we have counted to 10 bits,
+            // then transmission is over and we go to IDLE
+            if (bit_cnt == 4'hA) begin
+                nxt_state = IDLE;
+                set_done = 1;
+            end else begin
+                nxt_state = TRAN;
+                transmitting = 1;
+            end
         end
     endcase
 end

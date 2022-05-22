@@ -106,7 +106,7 @@ always_ff @(posedge clk, negedge rst_n)
         state <= nxt_state;
 
 // DEBUG: for seeing when we're reading JB
-assign count_high_dbg = count_cycles;
+assign DBG_count_high = count_cycles;
 
 // combinational logic (next state and output ctrl)
 always_comb begin
