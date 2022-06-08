@@ -12,6 +12,8 @@ module JOYBUS_rx (
 // STATE MACHINE OUTPUTS //
 //////////////////////////
 logic count_cycles;
+logic st_high;
+logic st_low;
 logic shift_rx;
 logic set_done;
 
@@ -37,23 +39,28 @@ always_ff @(posedge clk,negedge rst_n)
 // Once they sum to 100 cycles (4uS), compare each to see which one was higher.
 // This "voting" method helps counteract controllers with delayed timing e.g Hori Pad Mini.
 // See: https://www.raphnet.net/electronique/gc_n64_usb/index_en.php#5
+logic [7:0] rx_cycle_curr_count;
+always_ff @(posedge clk) begin
+    if (count_cycles)
+        rx_cycle_curr_count <= rx_cycle_curr_count + 1;
+    else 
+        rx_cycle_curr_count <= 0;
+end
+
+wire rx_cycle_timeout = rx_cycle_curr_count == 8'd200;
+wire rx_cycle_stop_length = rx_cycle_curr_count == 8'd100;
+
+
 logic [7:0] rx_cycle_low_count;
 logic [7:0] rx_cycle_high_count;
-always_ff @(posedge clk) 
-    if (count_cycles)
-        if (JB_RX_ff2)
-            rx_cycle_high_count <= rx_cycle_high_count + 1;
-        else
-            rx_cycle_low_count <= rx_cycle_low_count + 1; 
-    else begin
+always_ff @(posedge clk, negedge rst_n) 
+    if (!rst_n) begin
         rx_cycle_low_count <= 0;
         rx_cycle_high_count <= 0;
+    end else begin
+        if (st_low) rx_cycle_low_count <= rx_cycle_curr_count;
+        if (st_high) rx_cycle_high_count <= rx_cycle_curr_count;
     end
-
-logic [7:0] rx_cycle_total_count;
-assign rx_cycle_total_count = rx_cycle_high_count + rx_cycle_low_count;
-wire rx_cycle_count_done = rx_cycle_total_count == 8'd200;
-wire rx_cycle_count_stop = rx_cycle_total_count == 8'd100;
 wire rx_cycle_bit_high = rx_cycle_high_count > rx_cycle_low_count;
 
 ///////////////////////
@@ -95,7 +102,7 @@ always @(posedge clk)
 // STATE MACHINE LOGIC //
 ////////////////////////
 
-typedef enum reg [1:0] {IDLE, READ, SHFT, STOP} RX_state_t;
+typedef enum reg [2:0] {IDLE, WAIT_FOR_LOW, COUNT_LOW, COUNT_HIGH, COUNT_HIGH_TRANSITION, SHFT, STOP} RX_state_t;
 RX_state_t state, nxt_state;
 
 // sequential logic
@@ -111,6 +118,8 @@ assign DBG_count_high = count_cycles;
 // combinational logic (next state and output ctrl)
 always_comb begin
     count_cycles = 0; 
+    st_low = 0;
+    st_high = 0;
     shift_rx = 0;
     set_done = 0;
 
@@ -119,25 +128,53 @@ always_comb begin
     case (state)
     IDLE: begin
         if (rx_start) begin
-            nxt_state = READ;
+            nxt_state = WAIT_FOR_LOW;
             count_cycles = 1;
         end
     end
-    READ: begin
-        if (rx_cycle_count_done) begin
-            nxt_state = SHFT;
+    WAIT_FOR_LOW: begin
+        if (!JB_RX_ff2) begin
+            nxt_state = COUNT_LOW;
+        end else if (rx_cycle_timeout) begin // line error (didn't go low in time)
             shift_rx = 1;
+            nxt_state = SHFT;
         end else
             count_cycles = 1;
     end
-    SHFT: begin
-        if (bit_cnt == 6'h20)
-            nxt_state = STOP;
-        else
-            nxt_state = READ;
+    COUNT_LOW: begin
+        if (JB_RX_ff2) begin
+            nxt_state = COUNT_HIGH;
+            st_low = 1;
+        end else if (rx_cycle_timeout) begin // line error (didn't go high in time)
+            shift_rx = 1;
+            nxt_state = SHFT;
+        end else
+            count_cycles = 1;
     end
-    STOP: begin
-        if (rx_cycle_count_stop) begin
+    COUNT_HIGH: begin
+        if (!JB_RX_ff2) begin
+            nxt_state = COUNT_HIGH_TRANSITION; // transition state because we need to wait for the st_high
+            st_high = 1;
+        end else if (rx_cycle_timeout) begin // line error (didn't go low in time)
+            shift_rx = 1;
+            nxt_state = SHFT;
+        end else
+            count_cycles = 1;
+    end
+    COUNT_HIGH_TRANSITION: begin
+        nxt_state = SHFT;
+        shift_rx = 1;
+    end
+    SHFT: begin
+        if (bit_cnt == 6'h21)
+            nxt_state = STOP;
+        else begin
+            nxt_state = WAIT_FOR_LOW;
+            
+        end
+    end
+    default: begin // STOP
+        if (rx_cycle_stop_length) begin
             nxt_state = IDLE;
             set_done = 1;
         end else

@@ -13,6 +13,8 @@ import tb_tasks::*;
     reg cntlr_test_write;
     reg JB_RX;
 
+    wire TX;
+
 task automatic send_rand_resp(ref RX, output [31:0] resp);
     begin
     resp = $urandom();
@@ -27,7 +29,7 @@ task automatic send_rand_resp(ref RX, output [31:0] resp);
     end
 endtask
 
-    JOYBUS_host iDUT (.*, .DBG_dig(), .DBG_seg(), .DBG_count_high());
+    N64_Serial_top iDUT (.*, .DBG_dig(), .DBG_seg(), .DBG_count_high());
 
     integer cnt;
     logic [31:0] resp;
@@ -49,7 +51,7 @@ endtask
         @(posedge clk);            
 
         repeat (3) begin
-            wait4sig(clk, iDUT.tx_done, 2000000);
+            wait4sig(clk, iDUT.iJB_HOST.tx_done, 2000000);
 
             fork
                 begin: send_data
@@ -61,7 +63,7 @@ endtask
                     $stop();
                 end
                 begin: wait_data
-                    @(posedge iDUT.rx_done);
+                    @(posedge iDUT.iJB_HOST.rx_done);
                     cntlr_test_write = 0;
                     disable send_data;
                 end

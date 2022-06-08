@@ -15,7 +15,7 @@ reg [7:0] tx_data; // what byte to send to the UART
 // UART_TX INSTANTIATION //
 //////////////////////////
 wire tx_done;
-UART_tx iUART_TX(.clk(clk), .rst_n(rst_n),
+UART_tx iUART_TX(.clk(clk), .rst_n(rst_n), .tx_data(tx_data),
     .trmt(tx_trmt),.tx_done(tx_done),.TX(TX));
 
 //////////////////////////
@@ -24,7 +24,7 @@ UART_tx iUART_TX(.clk(clk), .rst_n(rst_n),
 
 // TODO: stupid way of doing this?
 // little flexibility for adding more bytes
-typedef enum reg {IDLE, BYTE1, BYTE2, BYTE3, BYTE4} UART_host_state_t;
+typedef enum reg [2:0] {IDLE, BYTE1, BYTE2, BYTE3, BYTE4} UART_host_state_t;
 UART_host_state_t state, nxt_state;
 
 // sequential logic
@@ -38,6 +38,7 @@ always_ff @(posedge clk, negedge rst_n)
 always_comb begin
     tx_trmt = 0;
     tx_data = 8'h0;
+	nxt_state = state;
 
     case (state)
 		 IDLE: begin

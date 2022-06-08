@@ -2,6 +2,8 @@
 module JOYBUS_host (
     input clk, rst_n,
     inout JB,
+    output cntlr_data_rdy,
+    output [31:0] cntlr_data,
     output btn_A,
     output btn_B,
     output btn_Z,
@@ -11,7 +13,7 @@ module JOYBUS_host (
     output DBG_count_high
 );
 
-localparam POLL_RATE_MS = 20;
+localparam POLL_RATE_MS = 75;
 localparam POLL_CYCLES = POLL_RATE_MS * 1000 * 1000 * 1/40;
 
 ////////////////////////////
@@ -21,7 +23,6 @@ logic count_poll_cycles;
 logic cmd_rdy;
 logic [7:0] cmd_data;
 logic ld_cntlr_data;
-//logic rst_cntlr_data;
 
 //////////////////////
 // POLLING COUNTER //
@@ -69,6 +70,9 @@ always_ff @(posedge clk, negedge rst_n)
         // When we're finished with a read, hold it until the next poll (20ms by default)
         jb_cntlr_data <= jb_rx_cntlr_data; 
 	 end
+
+assign cntlr_data_rdy = ld_cntlr_data; // if we're loading cntlr data, we want to tell the uart
+assign cntlr_data = jb_cntlr_data;
 
 /////////////////////////
 // BUTTON ASSIGNMENTS //
