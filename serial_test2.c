@@ -106,9 +106,10 @@ int main() {
     unsigned long i = 0;
     while (1) { 
         write(fd, &buf, 1);
-    	size_t r = read(fd, packet_buf, 4);
+        for (unsigned long j = 0; j < 9000000; j++) {} 
+    	//size_t r = read(fd, packet_buf, 4);
 //        read_port(fd, packet_buf, size);
-        printf("%2x %2x %2x %2x \n", packet_buf[0], packet_buf[1], packet_buf[2], packet_buf[3]);
+        //printf("%2x %2x %2x %2x \n", packet_buf[0], packet_buf[1], packet_buf[2], packet_buf[3]);
         //write(fd2, packet_buf, 4);
         //for (unsigned long j = 0; j < 90000000; j++) {}
         

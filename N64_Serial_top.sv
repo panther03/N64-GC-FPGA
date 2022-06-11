@@ -13,8 +13,14 @@ module N64_Serial_top (
 
     // UART
     output TX,
-    input RX
+    input RX,
+
+    output DBG_uart,
+    output rx_dbg
 );
+
+assign DBG_uart = RX; 
+assign TX = rx_dbg;
 
 wire [31:0] cntlr_data;
 wire cntlr_data_rdy;
@@ -40,7 +46,7 @@ JOYBUS_host iJB_HOST(.clk(clk), .rst_n(rst_n), .JB(JB),
 /////////////////////////
 // UART INSTANTIATION //
 ///////////////////////
-UART_host iUART_host(.clk(clk), .rst_n(rst_n), .TX(TX), .RX(RX),
-    .cntlr_data(cntlr_data),.set_cntlr_data_rdy(cntlr_data_rdy));
+UART_host iUART_host(.clk(clk), .rst_n(rst_n), .TX(rx_dbg), .RX(RX),
+    .cntlr_data(cntlr_data),.set_cntlr_data_rdy(cntlr_data_rdy), .rx_dbg());
 
 endmodule
