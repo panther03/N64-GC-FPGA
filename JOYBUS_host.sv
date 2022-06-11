@@ -13,7 +13,7 @@ module JOYBUS_host (
     output DBG_count_high
 );
 
-localparam POLL_RATE_MS = 75;
+localparam POLL_RATE_MS = 50;
 localparam POLL_CYCLES = POLL_RATE_MS * 1000 * 1000 * 1/40;
 
 ////////////////////////////
