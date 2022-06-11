@@ -4,8 +4,7 @@ module UART_rx (
     input clr_rdy,
     input RX,
     output [7:0] rx_data,
-    output reg rdy,
-    output rx_dbg 
+    output reg rdy
 );
 
 // metastability prevention
@@ -89,7 +88,6 @@ always_ff @(posedge clk, negedge rst_n)
         state <= IDLE;
     else
         state <= nxt_state;
-assign rx_dbg = state;
 
 // combinational logic (next state and output ctrl)
 always_comb begin

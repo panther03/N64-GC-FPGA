@@ -7,3 +7,6 @@ db/
 incremental_db
 output_files/
 *.bak
+xsim.dir/
+xvlog.log
+xvlog.pb

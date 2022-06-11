@@ -3,8 +3,7 @@ module UART_host (
     input [31:0] cntlr_data, // data packet from controller, assumes this is held until next packet!
     input set_cntlr_data_rdy, // new 4-byte packet is ready
     output TX, 
-    input RX,
-    output rx_dbg
+    input RX
 );
 
 ////////////////////////////
@@ -29,9 +28,9 @@ UART_tx iUART_TX(.clk(clk), .rst_n(rst_n), .tx_data(tx_data),
 wire [7:0] application_req;
 wire rx_rdy;
 UART_rx iUART_RX(.clk(clk), .rst_n(rst_n), .rx_data(application_req),
-    .clr_rdy(reset_application_rdy),.rdy(rx_rdy),.RX(RX), .rx_dbg(rx_dbg));
+    .clr_rdy(reset_application_rdy),.rdy(rx_rdy),.RX(RX));
 
-wire set_application_rdy = rx_rdy; // magic request byte, tells us that the game is requesting controller data
+wire set_application_rdy = (application_req == 8'hC6) && rx_rdy; // magic request byte, tells us that the game is requesting controller data
 
 ////////////////////////
 // cntlr_data_rdy FF //
