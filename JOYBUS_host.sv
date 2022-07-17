@@ -10,7 +10,8 @@ module JOYBUS_host (
     output btn_S,
     output [3:0] DBG_dig,
     output [7:0] DBG_seg,
-    output DBG_count_high
+    output DBG_count_high,
+    output [2:0] DBG_state
 );
 
 localparam POLL_RATE_MS = 20;

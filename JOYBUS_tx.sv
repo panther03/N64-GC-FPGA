@@ -38,7 +38,7 @@ always_ff @(posedge clk)
 
 wire tx_cycle_count_data = tx_cycle_count == DATA_DELAY - 2; 
 wire tx_cycle_count_start_end = tx_cycle_count == (DATA_DELAY >> 1) - 1;
-wire tx_cycle_count_stop = tx_cycle_count == DATA_DELAY - 1;
+wire tx_cycle_count_stop = tx_cycle_count == 120 - 1;
 
 ///////////////////////
 // Shift Reg for TX //

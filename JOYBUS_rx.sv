@@ -5,7 +5,8 @@ module JOYBUS_rx (
     input rx_start,
     output reg rx_done,
     output [31:0] jb_cntlr_data,
-    output DBG_count_high
+    output DBG_count_high,
+    output [2:0] DBG_state
 );
 
 ////////////////////////////
@@ -102,7 +103,7 @@ always @(posedge clk)
 // STATE MACHINE LOGIC //
 ////////////////////////
 
-typedef enum reg [2:0] {IDLE, WAIT_FOR_LOW, COUNT_LOW, COUNT_HIGH, COUNT_HIGH_TRANSITION, SHFT, STOP} RX_state_t;
+typedef enum reg [2:0] {IDLE = 3'h0, WAIT_FOR_LOW = 3'h1, COUNT_LOW = 3'h2, COUNT_HIGH = 3'h3, COUNT_HIGH_TRANSITION = 3'h4, SHFT = 3'h5, STOP = 3'h6} RX_state_t;
 RX_state_t state, nxt_state;
 
 // sequential logic
@@ -114,6 +115,8 @@ always_ff @(posedge clk, negedge rst_n)
 
 // DEBUG: for seeing when we're reading JB
 assign DBG_count_high = count_cycles;
+// DEBUG: the current state of SM
+assign DBG_state = {rx_start,state[1:0]};
 
 // combinational logic (next state and output ctrl)
 always_comb begin
@@ -174,7 +177,9 @@ always_comb begin
         end
     end
     default: begin // STOP
-        if (rx_cycle_stop_length) begin
+        // stop length hit, or it stopped early
+        // and the controller pulled it back high
+        if (rx_cycle_stop_length | JB_RX_ff2) begin
             nxt_state = IDLE;
             set_done = 1;
         end else

@@ -6,6 +6,9 @@ module UART_host (
     input RX
 );
 
+wire TX_n;
+assign TX = TX_n;
+
 ////////////////////////////
 // STATE MACHINE OUTPUTS //
 //////////////////////////
@@ -20,7 +23,7 @@ reg reset_application_rdy; // when we've sent the response back to the game
 //////////////////////////
 wire tx_done;
 UART_tx iUART_TX(.clk(clk), .rst_n(rst_n), .tx_data(tx_data),
-    .trmt(tx_trmt),.tx_done(tx_done),.TX(TX));
+    .trmt(tx_trmt),.tx_done(tx_done),.TX(TX_n));
 
 ////////////////////////////
 // UART_RX INSTANTIATION //
@@ -30,7 +33,7 @@ wire rx_rdy;
 UART_rx iUART_RX(.clk(clk), .rst_n(rst_n), .rx_data(application_req),
     .clr_rdy(reset_application_rdy),.rdy(rx_rdy),.RX(RX));
 
-wire set_application_rdy = (application_req == 8'hC6) && rx_rdy; // magic request byte, tells us that the game is requesting controller data
+wire set_application_rdy = (application_req == 8'hC6) &&  rx_rdy; // magic request byte, tells us that the game is requesting controller data
 
 ////////////////////////
 // cntlr_data_rdy FF //
