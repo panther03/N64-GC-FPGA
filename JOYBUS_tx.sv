@@ -148,7 +148,7 @@ always_comb begin
     DATA: begin
         if (bit_cnt[3]) begin
             nxt_state = STOP;
-            count_cycles = 1;
+            //count_cycles = 1;
         end else begin
             nxt_state = DATA_CNT;
         end

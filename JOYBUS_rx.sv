@@ -116,7 +116,7 @@ always_ff @(posedge clk, negedge rst_n)
 // DEBUG: for seeing when we're reading JB
 assign DBG_count_high = count_cycles;
 // DEBUG: the current state of SM
-assign DBG_state = {rx_start,state[1:0]};
+assign DBG_state =state;
 
 // combinational logic (next state and output ctrl)
 always_comb begin
@@ -169,7 +169,7 @@ always_comb begin
         shift_rx = 1;
     end
     SHFT: begin
-        if (bit_cnt == 6'h21)
+        if (bit_cnt == 6'h20)
             nxt_state = STOP;
         else begin
             nxt_state = WAIT_FOR_LOW;
