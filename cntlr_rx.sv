@@ -1,7 +1,7 @@
 `timescale 1ns/1ns
 module JOYBUS_rx (
     input clk, rst_n,
-    input JB_RX,
+    input JB,
     input rx_start,
     output reg rx_done,
     output [31:0] jb_cntlr_data,
