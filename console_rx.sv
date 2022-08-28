@@ -3,7 +3,9 @@ module console_rx (
     input clk, rst_n,
     input JB_RX,
     input reset_poll_status,
-    output reg console_did_poll
+    input reset_cmd_done_status,
+    output reg console_did_poll,
+    output reg console_cmd_done
 );
 
 ////////////////////////////
@@ -14,6 +16,7 @@ logic st_high;
 logic st_low;
 logic shift_rx;
 logic reset_cnt;
+logic set_cmd_done;
 
 ///////////////////////////////////////
 // RX line metastability prevention //
@@ -76,16 +79,28 @@ always_ff @(posedge clk,negedge rst_n)
 /////////////////////////////////////////////
 // Detect if the console is polling or not //
 ////////////////////////////////////////////
-reg DBG_reset_poll;
+// reg DBG_reset_poll;
 always_ff @(posedge clk, negedge rst_n)
     if (!rst_n)
         console_did_poll <= 0;
-    //else if (reset_poll_status)
-    //    console_did_poll <= 0;
+    else if (reset_poll_status)
+        console_did_poll <= 0;
     else if (jb_rx_shift_reg[23:8] == 16'h4003)
         console_did_poll <= 1;
-    else if (DBG_reset_poll)
-        console_did_poll <= 0;
+//    else if (DBG_reset_poll)
+//        console_did_poll <= 0;
+
+/////////////////////////////////////////////////////////////
+// Send signal when the console is done sending a command //
+///////////////////////////////////////////////////////////
+reg console_cmd_done;
+always_ff @(posedge clk, negedge rst_n)
+    if (!rst_n)
+        console_cmd_done <= 0;
+    else if (reset_cmd_done_status)
+        console_cmd_done <= 0;
+    else if (set_cmd_done)
+        console_cmd_done <= 1;
 
 /////////////////////////
 // Bit counter for RX //
@@ -104,7 +119,7 @@ always_ff @(posedge clk, negedge rst_n)
 // STATE MACHINE LOGIC //
 ////////////////////////
 
-typedef enum reg [2:0] {IDLE, COUNT_LOW, COUNT_HIGH, WAIT_FOR_LOW, COUNT_HIGH_TRANSITION, SHFT, STOP, HOLD_DATA} RX_state_t;
+typedef enum reg [2:0] {IDLE, COUNT_LOW, COUNT_HIGH, WAIT_FOR_LOW, COUNT_HIGH_TRANSITION, SHFT, STOP} RX_state_t;
 RX_state_t state, nxt_state;
 
 // sequential logic
@@ -126,13 +141,14 @@ always_comb begin
     st_high = 0;
     shift_rx = 0;
     reset_cnt = 0;
-    DBG_reset_poll = 0;
+    //DBG_reset_poll = 0;
+    set_cmd_done = 0;
 
     nxt_state = state;
 
     case (state)
     IDLE: begin
-        DBG_reset_poll = 1;
+        //DBG_reset_poll = 1;
         if (!JB_RX_ff2) begin
             nxt_state = COUNT_LOW;
             count_cycles = 1;
@@ -173,24 +189,21 @@ always_comb begin
         shift_rx = 1;
     end
     SHFT: begin
-        if (bit_cnt == 5'h18)
+        if ((bit_cnt == 5'h18) && (jb_rx_shift_reg[23:16] == 8'h40))
+        || ((bit_cnt == 5'h8) && ((jb_rx_shift_reg[7:0] == 8'h00) || (jb_rx_shift_reg[7:0] == 8'h41)))
             nxt_state = STOP;
         else begin
             nxt_state = WAIT_FOR_LOW;
         end
     end
-    STOP: begin
+    default: begin // STOP
         // stop length hit, or it stopped early
         // and the controller pulled it back high
         if (rx_cycle_stop_length | JB_RX_ff2) begin
-            nxt_state = HOLD_DATA;
+            set_cmd_done = 1;
+            nxt_state = IDLE;
         end else
             count_cycles = 1;
-    end
-    default: begin // HOLD_DATA
-        //if (reset_poll_status)
-        nxt_state = IDLE;
-        // else stay in the current state
     end
     endcase
 end
