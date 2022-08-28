@@ -21,51 +21,64 @@ module ESS_top (
 wire [63:0] cntlr_data;
 wire cntlr_data_rdy;
 
-reg SEND_CONS_RESP_sel;
+reg reset_poll_status;
+reg reset_cmd_done_status;
 
-wire JB_cons_RX = JB_cons;
-wire JB_ctlr_RX = JB_ctlr;
-assign JB_ctlr = SEND_CONS_RESP_sel ? 1'bz : JB_cons_RX;
-assign JB_cons = SEND_CONS_RESP_sel ? 1'b0 : JB_ctlr_RX;
+reg console_to_cntlr;
+reg cntlr_to_console;
+
+reg inject_sel;
+
+wire JB_cons_RX;
+wire JB_ctlr_RX;
+assign JB_ctlr = console_to_cntlr ? JB_cons_RX : 1'bz;
+assign JB_cons = cntlr_to_console ? (inject_sel ? JB_ctlr_RX): 1'bz;
+
+assign JB_cons_RX = JB_cons;
+assign JB_ctrl_RX = JB_ctlr;
 
 wire console_did_poll;
-assign DBG_btn_A = console_did_poll;
+wire console_cmd_done;
 
 ///////////////////////////
 // JOYBUS INSTANTIATION //
 /////////////////////////
 console_rx iCONS_RX(.clk(clk), .rst_n(rst_n), .JB_RX(JB_cons),
-    .reset_poll_status(1'b0), .console_did_poll(console_did_poll));
+    .reset_poll_status(reset_poll_status), .console_did_poll(console_did_poll),
+    .reset_cmd_done_status(reset_cmd_done_status), .console_cmd_done(console_cmd_done));
 
 //////////////////////////
 // STATE MACHINE LOGIC //
 ////////////////////////
 
-typedef enum reg [1:0] {WAIT_FOR_CONS_POLL, READ_CNTLR, FIX_RESP, SEND_RESP} RX_state_t;
-RX_state_t state, nxt_state;
+typedef enum reg [1:0] {WAIT_FOR_CONS_POLL, READ_CNTLR, INJECT_RESP, FINISH_READ_CNTLR} ESS_state_t;
+ESS_state_t state, nxt_state;
 
 // sequential logic
-/*
+
 always_ff @(posedge clk, negedge rst_n)
     if (!rst_n)
         state <= WAIT_FOR_CONS_POLL;
     else
         state <= nxt_state;
-*/
 
 always_comb begin
-    SEND_CONS_RESP_sel = 1'b0;
-end
+    console_to_cntlr = 1;
+    cntlr_to_console = 0; 
 
-//always_comb begin
-//    case (sate)
-//        WAIT_FOR_CONS_POLL: begin
-//            if console_did_poll:
-//        end
-//        READ_CNTLR: begin
-//
-//        end
-//    endcase
-//end
+    case (sate)
+        WAIT_FOR_CONS_POLL: begin
+            console_to_cntlr = 1;
+            if console_cmd_done begin
+                nxt_state = READ_CNTLR;
+                reset_cmd_done_status = 1;
+                rx_start = 1
+            end
+        end
+        READ_CNTLR: begin
+            if console_did_poll
+        end
+    endcase
+end
 
 endmodule
