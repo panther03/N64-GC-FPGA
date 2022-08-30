@@ -4,7 +4,7 @@ module injection_tx (
     input inj_tx_start,
     input x,
     input y,
-    output inj_jb_tx,
+    output reg JB_TX,
     output reg inj_tx_done
 );
 
@@ -17,7 +17,19 @@ logic tx_low;
 logic init_tran;
 logic set_done;
 logic shift_tx;
-logic sel_low;
+
+///////////////////////////////////
+// Cstick value injection logic //
+/////////////////////////////////
+logic [7:0] cstick_x;
+always_comb begin
+    if (x) 
+        cstick_x = 8'h80;
+    else if (y) 
+        cstick_x = 8'h7F;        
+    else
+        cstick_x = 8'h0;
+end
 
 /////////////////////////////////////
 // Counter for each duration type //
@@ -37,7 +49,6 @@ always_ff @(posedge clk)
 
 wire tx_cycle_count_data = tx_cycle_count == DATA_DELAY - 2; 
 wire tx_cycle_count_start_end = tx_cycle_count == (DATA_DELAY >> 1) - 1;
-wire tx_cycle_count_stop = tx_cycle_count == 120 - 1;
 
 ///////////////////////
 // Shift Reg for TX //
@@ -50,7 +61,7 @@ always_ff @(posedge clk,negedge rst_n)
     if (!rst_n)
         jb_tx_shift_reg <= 8'hff; // set
     else if (init_tran)
-        jb_tx_shift_reg <= cmd_data;
+        jb_tx_shift_reg <= cstick_x;
     else if (shift_tx)        
         jb_tx_shift_reg <= {jb_tx_shift_reg[6:0],1'b1};
 
@@ -61,9 +72,9 @@ always_ff @(posedge clk,negedge rst_n)
 logic [3:0] bit_cnt;
 always_ff @(posedge clk, negedge rst_n) 
     if (!rst_n)
-        bit_cnt = 0;
+        bit_cnt <= 0;
     else if (init_tran)
-        bit_cnt = 0;
+        bit_cnt <= 0;
     else if  (shift_tx)
         bit_cnt <= bit_cnt + 1;
 
@@ -80,31 +91,11 @@ always_comb begin
         JB_TX = jb_tx_shift_reg[7];
 end
 
-//////////////////////
-// tx_done SR flop //
-////////////////////
-
-always @(posedge clk)
-    if (set_done)       
-        tx_done <= 1;
-    else
-        tx_done <= 0;
-
-/////////////////////
-// JB_TX_SEL flop //
-///////////////////
-
-always @(posedge clk)
-    if (sel_low)
-        JB_TX_SEL <= 0;
-    else    
-        JB_TX_SEL <= 1;
-
 //////////////////////////
 // STATE MACHINE LOGIC //
 ////////////////////////
 
-typedef enum reg [2:0] {IDLE, CMD, DATA, DATA_CNT, HIGH, STOP, RCV_WAIT} TX_state_t;
+typedef enum reg [2:0] {IDLE, CMD, DATA, DATA_CNT, HIGH} TX_state_t;
 TX_state_t state, nxt_state;
 
 // sequential logic
@@ -122,18 +113,17 @@ always_comb begin
     set_done = 0;
     init_tran = 0;
     shift_tx = 0;
-    sel_low = 0;
+    inj_tx_done = 0;
 
     nxt_state = state;
 
     case (state)
     IDLE: begin
-        if (cmd_rdy)
+        if (inj_tx_start)
             nxt_state = CMD;
             count_cycles = 1;
             tx_low = 1;
             init_tran = 1;
-            sel_low = 1;
     end
     CMD: begin
         if (tx_cycle_count_start_end) begin
@@ -146,8 +136,8 @@ always_comb begin
     end
     DATA: begin
         if (bit_cnt[3]) begin
-            nxt_state = STOP;
-            //count_cycles = 1;
+            nxt_state = IDLE;
+            inj_tx_done = 1;
         end else begin
             nxt_state = DATA_CNT;
         end
@@ -159,7 +149,7 @@ always_comb begin
             count_cycles = 1;
         end
     end
-    HIGH: begin
+    default: begin // HIGH
         if (tx_cycle_count_start_end) begin
             nxt_state = CMD;
             shift_tx = 1;
@@ -168,22 +158,6 @@ always_comb begin
             count_cycles = 1;
             tx_high = 1;
         end
-    end
-    STOP: begin
-        if (tx_cycle_count_stop) begin
-            nxt_state = RCV_WAIT;
-            set_done = 1;
-            sel_low = 1;
-        end else begin
-            count_cycles = 1;
-            tx_high = 1;
-        end
-    end
-    RCV_WAIT: begin
-        if (rx_done)
-            nxt_state = IDLE;
-        else
-            sel_low = 1;
     end
     endcase
 end

@@ -4,7 +4,9 @@ module cntlr_rx (
     input JB_RX,
     input rx_start,
     output reg rx_done,
-    output [31:0] jb_cntlr_data,
+    output reg x,
+    output reg y,
+    output reg start_injection,
     output DBG_count_high,
     output [2:0] DBG_state
 );
@@ -17,6 +19,7 @@ logic st_high;
 logic st_low;
 logic shift_rx;
 logic set_done;
+logic st_xy;
 
 ///////////////////////////////////////
 // RX line metastability prevention //
@@ -68,32 +71,40 @@ wire rx_cycle_bit_high = rx_cycle_high_count > rx_cycle_low_count;
 // Shift Reg for RX //
 /////////////////////
 
-logic [31:0] jb_rx_shift_reg;
+// just large enough to store x and y
+logic [1:0] jb_rx_shift_reg;
 always_ff @(posedge clk,negedge rst_n)
     if (!rst_n)
         jb_rx_shift_reg <= 0; // set
     else if (shift_rx)        
-        jb_rx_shift_reg <= {jb_rx_shift_reg[30:0],rx_cycle_bit_high};
+        jb_rx_shift_reg <= {jb_rx_shift_reg[0],rx_cycle_bit_high};
 
-assign jb_cntlr_data = jb_rx_shift_reg;
+always_ff @(posedge clk, negedge rst_n)
+    if (!rst_n) begin
+        x <= 0;
+        y <= 0;
+    end else if (st_xy) begin
+        x <= jb_rx_shift_reg[0];
+        y <= jb_rx_shift_reg[1];
+    end
 
 /////////////////////////
 // Bit counter for RX //
 ///////////////////////
 
-logic [5:0] bit_cnt;
+logic [6:0] bit_cnt;
 always_ff @(posedge clk, negedge rst_n) 
     if (!rst_n)
-        bit_cnt = 0;
+        bit_cnt <= 0;
     else if (rx_start)
-        bit_cnt = 0;
+        bit_cnt <= 0;
     else if (shift_rx)
         bit_cnt <= bit_cnt + 1;
 
 ///////////////////
 // rx_done flop //
 /////////////////
-always @(posedge clk)
+always_ff @(posedge clk)
     if (set_done)       
         rx_done <= 1;
     else
@@ -125,6 +136,8 @@ always_comb begin
     st_high = 0;
     shift_rx = 0;
     set_done = 0;
+    st_xy = 0;
+    start_injection = 0;
 
     nxt_state = state;
 
@@ -169,7 +182,11 @@ always_comb begin
         shift_rx = 1;
     end
     SHFT: begin
-        if (bit_cnt == 6'h20)
+        if (bit_cnt == 7'd6)
+            st_xy = 1;
+        else if (bit_cnt == 7'd32)
+            start_injection = 1;
+        else if (bit_cnt == 7'd64)
             nxt_state = STOP;
         else begin
             nxt_state = WAIT_FOR_LOW;
