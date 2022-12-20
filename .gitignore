@@ -1,8 +1,7 @@
 transcript
 vsim.wlf
-work/*
+work/
 *.cr.mti
-*.mpf
 db/
 incremental_db
 output_files/
