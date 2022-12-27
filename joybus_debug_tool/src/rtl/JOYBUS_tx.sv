@@ -3,7 +3,6 @@ module JOYBUS_tx (
     input clk, rst_n,
     input [7:0] cmd_data,
     input cmd_rdy,
-    input rx_done,
     output reg JB_TX,
     output reg JB_TX_SEL,
     output reg tx_done
@@ -105,7 +104,7 @@ always @(posedge clk)
 // STATE MACHINE LOGIC //
 ////////////////////////
 
-typedef enum reg [2:0] {IDLE, CMD, DATA, DATA_CNT, HIGH, STOP, RCV_WAIT} TX_state_t;
+typedef enum reg [2:0] {IDLE, CMD, DATA, DATA_CNT, HIGH, STOP} TX_state_t;
 TX_state_t state, nxt_state;
 
 // sequential logic
@@ -129,12 +128,14 @@ always_comb begin
 
     case (state)
     IDLE: begin
-        if (cmd_rdy) // TODO: THIS SHOULD HAVE A BEGIN END!??????? lol
+        if (cmd_rdy) begin
             nxt_state = CMD;
             count_cycles = 1;
             tx_low = 1;
             init_tran = 1;
+        end else begin
             sel_low = 1;
+        end
     end
     CMD: begin
         if (tx_cycle_count_start_end) begin
@@ -170,21 +171,15 @@ always_comb begin
             tx_high = 1;
         end
     end
-    STOP: begin
+    default: begin // STOP
         if (tx_cycle_count_stop) begin
-            nxt_state = RCV_WAIT;
+            nxt_state = IDLE;
             set_done = 1;
             sel_low = 1;
         end else begin
             count_cycles = 1;
             tx_high = 1;
         end
-    end
-    RCV_WAIT: begin
-        if (rx_done)
-            nxt_state = IDLE;
-        else
-            sel_low = 1;
     end
     endcase
 end

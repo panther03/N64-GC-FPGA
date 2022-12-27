@@ -1,0 +1,119 @@
+# -------------------------------------------------------------------------- #
+#
+# Copyright (C) 1991-2013 Altera Corporation
+# Your use of Altera Corporation's design tools, logic functions 
+# and other software and tools, and its AMPP partner logic 
+# functions, and any output files from any of the foregoing 
+# (including device programming or simulation files), and any 
+# associated documentation or information are expressly subject 
+# to the terms and conditions of the Altera Program License 
+# Subscription Agreement, Altera MegaCore Function License 
+# Agreement, or other applicable license agreement, including, 
+# without limitation, that your use is for the sole purpose of 
+# programming logic devices manufactured by Altera and sold by 
+# Altera or its authorized distributors.  Please refer to the 
+# applicable agreement for further details.
+#
+# -------------------------------------------------------------------------- #
+#
+# Quartus II 32-bit
+# Version 13.0.1 Build 232 06/12/2013 Service Pack 1 SJ Web Edition
+# Date created = 20:03:01  December 21, 2022
+#
+# -------------------------------------------------------------------------- #
+#
+# Notes:
+#
+# 1) The default values for assignments are stored in the file:
+#		JOYBUS_host_assignment_defaults.qdf
+#    If this file doesn't exist, see file:
+#		assignment_defaults.qdf
+#
+# 2) Altera recommends that you do not modify this file. This
+#    file is updated automatically by the Quartus II software
+#    and any changes you make may be lost or overwritten.
+#
+# -------------------------------------------------------------------------- #
+
+
+set_global_assignment -name FAMILY "Cyclone II"
+set_global_assignment -name DEVICE EP2C35F672C6
+set_global_assignment -name TOP_LEVEL_ENTITY JOYBUS_host
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION "13.0 SP1"
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "20:03:01  DECEMBER 21, 2022"
+set_global_assignment -name LAST_QUARTUS_VERSION "13.0 SP1"
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/rtl/JOYBUS_tx.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/rtl/JOYBUS_host.sv
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 1
+set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim-Altera (Verilog)"
+set_global_assignment -name EDA_OUTPUT_DATA_FORMAT "VERILOG HDL" -section_id eda_simulation
+set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+
+set_location_assignment PIN_N2 -to clk
+set_location_assignment PIN_N25 -to rst_n
+set_location_assignment PIN_G26 -to btn_send_ORIGIN
+set_location_assignment PIN_N23 -to btn_send_POLL
+set_location_assignment PIN_W25 -to JB
+
+# Debug buttons for rpi
+set_location_assignment PIN_K26 -to rpi_btns[7]
+set_location_assignment PIN_M23 -to rpi_btns[6]
+set_location_assignment PIN_M20 -to rpi_btns[5]
+set_location_assignment PIN_M21 -to rpi_btns[4]
+set_location_assignment PIN_M25 -to rpi_btns[3]
+set_location_assignment PIN_P24 -to rpi_btns[2]
+set_location_assignment PIN_R24 -to rpi_btns[1]
+set_location_assignment PIN_T22 -to rpi_btns[0]
+
+# Input buttons/switches
+set_location_assignment PIN_P23 -to btn_A
+set_location_assignment PIN_W26 -to btn_B
+set_location_assignment PIN_N26 -to sw_START
+set_location_assignment PIN_P25 -to sw_UP
+set_location_assignment PIN_AE14 -to sw_DOWN
+set_location_assignment PIN_AF14 -to sw_LEFT
+set_location_assignment PIN_AD13 -to sw_RIGHT
+
+# set_global_assignment -name ENABLE_SIGNALTAP ON
+# set_global_assignment -name USE_SIGNALTAP_FILE output_files/stp1.stp
+# set_global_assignment -name SIGNALTAP_FILE output_files/stp1.stp
+# set_global_assignment -name SLD_NODE_CREATOR_ID 110 -section_id auto_signaltap_1
+# set_global_assignment -name SLD_NODE_ENTITY_NAME sld_signaltap -section_id auto_signaltap_1
+# set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[0] -to btn_send_ORIGIN -section_id auto_signaltap_1
+# set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[0] -to btn_send_ORIGIN -section_id auto_signaltap_1
+# set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_NODE_INFO=805334529" -section_id auto_signaltap_1
+# set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_POWER_UP_TRIGGER=0" -section_id auto_signaltap_1
+# set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_STORAGE_QUALIFIER_INVERSION_MASK_LENGTH=0" -section_id auto_signaltap_1
+# set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_ATTRIBUTE_MEM_MODE=OFF" -section_id auto_signaltap_1
+# set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_STATE_FLOW_USE_GENERATED=0" -section_id auto_signaltap_1
+# set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_STATE_BITS=11" -section_id auto_signaltap_1
+# set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_BUFFER_FULL_STOP=1" -section_id auto_signaltap_1
+# set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_CURRENT_RESOURCE_WIDTH=1" -section_id auto_signaltap_1
+# set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_LEVEL_PIPELINE=1" -section_id auto_signaltap_1
+# set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_ENABLE_ADVANCED_TRIGGER=0" -section_id auto_signaltap_1
+# set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_SEGMENT_SIZE=64" -section_id auto_signaltap_1
+# set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_SAMPLE_DEPTH=64" -section_id auto_signaltap_1
+# set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT trigger_in -to clk -section_id auto_signaltap_1
+# set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_IN_ENABLED=1" -section_id auto_signaltap_1
+# set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT acq_clk -to clk -section_id auto_signaltap_1
+# set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[1] -to btn_send_POLL -section_id auto_signaltap_1
+# set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[2] -to rst_n -section_id auto_signaltap_1
+# set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[1] -to btn_send_POLL -section_id auto_signaltap_1
+# set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[2] -to rst_n -section_id auto_signaltap_1
+# set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_DATA_BITS=3" -section_id auto_signaltap_1
+# set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_BITS=3" -section_id auto_signaltap_1
+# set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_INVERSION_MASK=00000000000000000000000000000000000000" -section_id auto_signaltap_1
+# set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_INVERSION_MASK_LENGTH=38" -section_id auto_signaltap_1
+# set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_NODE_CRC_HIWORD=17008" -section_id auto_signaltap_1
+# set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_LEVEL=2" -section_id auto_signaltap_1
+# set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_ADVANCED_TRIGGER_ENTITY=basic,1,basic,1," -section_id auto_signaltap_1
+# set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_NODE_CRC_LOWORD=11905" -section_id auto_signaltap_1
+# set_global_assignment -name SLD_FILE "/home/panther/src/N64-GC-FPGA/joybus_debug_tool/proj/quartus/output_files/stp1_auto_stripped.stp"
+# set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

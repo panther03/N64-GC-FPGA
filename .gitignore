@@ -3,7 +3,9 @@ vsim.wlf
 work/
 *.cr.mti
 db/
-incremental_db
+incremental_db/
+greybox_tmp/
+simulation/
 output_files/
 *.bak
 xsim.dir/
