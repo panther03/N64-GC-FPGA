@@ -9,7 +9,7 @@ module JOYBUS_host (
     input btn_B,
     input sw_START,
     input sw_UP,
-    input sw_DWN,
+    input sw_DOWN,
     input sw_LEFT,
     input sw_RIGHT
 );
@@ -155,6 +155,6 @@ end
 // Seven segment display for debug
 // seven_seg_main i7Seg(.disp_num(jb_cntlr_data[15:0]),.clk(clk),.rst_n(rst_n),.dig(DBG_dig),.seg(DBG_seg));
 
-assign rpi_btns = {1'b0, btn_A, btn_B, sw_START, sw_UP, sw_DWN, sw_LEFT, sw_RIGHT};
+assign rpi_btns = {1'b0, btn_A, btn_B, sw_START, sw_UP, sw_DOWN, sw_LEFT, sw_RIGHT};
 
 endmodule
